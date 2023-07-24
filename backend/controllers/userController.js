@@ -134,6 +134,7 @@ exports.update = asyncHandler(async (req, res) => {
 
 exports.uploadAvatar = (req, res) => {
 	// console.log(req.file) // UT: Print the user's uploaded file
+	// 1. Validation
 	if (!req.file) return res.status(400).send({ message: 'No file provided.' })
 
 	return res.status(201).send({ message: 'Successfully uploaded the profile photo.' })
