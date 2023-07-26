@@ -1,9 +1,13 @@
+const path = require('path')
+const fs = require('fs')
+
 const asyncHandler = require('express-async-handler')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 const User = require('../models/User')
 const validation = require('../validation')
+const cloudinary = require('../utils/cloudinary')
 
 exports.register = asyncHandler(async (req, res) => {
 	/**
@@ -67,8 +71,13 @@ exports.login = asyncHandler(async (req, res) => {
 
 	// 4
 	const token = user.generateToken()
-	const { password, ...others } = user._doc
-	res.status(200).json({ ...others, token }) // 5
+	res.status(200).json({
+		_id: user._id,
+		username: user.username,
+		isAdmin: user.isAdmin,
+		avatar: user.avatar,
+		token
+	}) // 5
 })
 
 exports.usersList = asyncHandler(async (req, res) => {
@@ -132,10 +141,56 @@ exports.update = asyncHandler(async (req, res) => {
 	return res.status(200).json(updatedUser)
 })
 
-exports.uploadAvatar = (req, res) => {
+exports.uploadAvatar = asyncHandler(async (req, res) => {
+	console.log(req.file)
+	/**
+	 * 1. Validation
+	 * 2. Get the image's path
+	 * 3. Upload image to Cloudinary
+	 * 4. Get the user's id from db
+	 * 5. Delete the old profile image
+	 * 6. Change the profile image field in db (Avatar)
+	 * 7. Respond to user's request
+	 * 8. Delete the image from our server
+	 */
 	// console.log(req.file) // UT: Print the user's uploaded file
 	// 1. Validation
-	if (!req.file) return res.status(400).send({ message: 'No file provided.' })
+	if (!req.file) {
+		return res.status(400).send({ message: 'No file provided.' })
+	}
 
-	return res.status(201).send({ message: 'Successfully uploaded the profile photo.' })
-}
+	// 2. Get the image's path
+	const imagePath = path.join(__dirname, `../uploads/images/${req.file.filename}`)
+
+	// 3. Upload image to Cloudinary
+	const result = await cloudinary.uploadImage(imagePath)
+
+	// 4. Get the user's id from db
+	const user = await User.findById(req.user._id)
+
+	// 5. Delete the old profile image
+	if (user.avatar.publicId !== null) {
+		await cloudinary.removeImage(user.avatar.publicId)
+	}
+
+	// 6. Change the profile image field in db (Avatar)
+	user.avatar = {
+		url: result.secure_url,
+		publicId: result.public_id
+	}
+
+	await user.save()
+
+	// 7. Respond to user
+	res.status(201).send({
+		message: 'Successfully uploaded the profile photo.',
+		avatar: { url: result.secure_url, publicId: result.public_id }
+	})
+
+	try {
+		fs.unlinkSync(imagePath)
+		console.log('Image deleted successfully.')
+	} catch (error) {
+		console.log(error)
+	}
+})
