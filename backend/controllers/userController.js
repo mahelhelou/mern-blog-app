@@ -71,7 +71,7 @@ exports.login = asyncHandler(async (req, res) => {
 
 	// 4
 	const token = user.generateToken()
-	res.status(200).json({
+	res.status(201).json({
 		_id: user._id,
 		username: user.username,
 		isAdmin: user.isAdmin,
@@ -102,9 +102,9 @@ exports.usersCount = asyncHandler(async (req, res) => {
 exports.findById = asyncHandler(async (req, res) => {
 	const userId = req.params.id
 
-	const user = await User.findById(userId).select('-password')
+	const user = await User.findById(userId).select('-password').populate('posts')
 	if (!user) {
-		return res.status(404).send({ message: 'User not found!' })
+		return res.status(404).send({ message: '404! User not found.' })
 	}
 
 	return res.status(200).json(user)
@@ -118,7 +118,7 @@ exports.update = asyncHandler(async (req, res) => {
 
 	const user = await User.findById(req.params.id)
 	if (!user) {
-		return res.send(400).send({ message: 'User not found!' })
+		return res.send(404).send({ message: '404! User not found.' })
 	}
 
 	if (req.body.password) {
@@ -156,7 +156,7 @@ exports.uploadAvatar = asyncHandler(async (req, res) => {
 	// console.log(req.file) // UT: Print the user's uploaded file
 	// 1. Validation
 	if (!req.file) {
-		return res.status(400).send({ message: 'No file provided.' })
+		return res.status(400).send({ message: 'No image provided! Try again.' })
 	}
 
 	// 2. Get the image's path
@@ -187,10 +187,48 @@ exports.uploadAvatar = asyncHandler(async (req, res) => {
 		avatar: { url: result.secure_url, publicId: result.public_id }
 	})
 
-	try {
+	// 8. Delete the image from our server
+	fs.unlinkSync(imagePath)
+	/* try {
 		fs.unlinkSync(imagePath)
 		console.log('Image deleted successfully.')
 	} catch (error) {
 		console.log(error)
+	} */
+})
+
+exports.delete = asyncHandler(async (req, res) => {
+	/**
+	 * 1. Get the user from DB
+	 * 2. Get user's posts from db
+	 * 3. Get public ids from posts
+	 * 4. Delete posts' images from the Cloudinary
+	 * 5. Delete the user's avatar from the Cloudinary
+	 * 6. Delete user's posts and comments
+	 * 7. Delete the whole user object
+	 * 8. Respond to user's request
+	 */
+
+	// 1
+	const user = await User.findById(req.params.id)
+	console.log(user)
+
+	if (!user) return res.status(404).send({ message: '404! User not found.' })
+
+	// TODO (2)
+	// TODO (3)
+	// TODO (4)
+
+	// 5
+	if (req.user.publicId) {
+		await cloudinary.removeImage(user.avatar.publicId)
 	}
+
+	// TODO (6)
+
+	// 7
+	await User.findOneAndDelete(req.params.id)
+
+	// 8
+	res.status(200).send({ message: 'User has been deleted successfully.' })
 })

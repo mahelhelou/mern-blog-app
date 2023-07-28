@@ -5,7 +5,7 @@ const User = require('../models/User')
 exports.mustBeLoggedIn = async (req, res, next) => {
 	const authToken = req.headers.authorization
 	if (!authToken) {
-		return res.status(401).send({ message: 'No token provided! Access denied.' })
+		return res.status(401).send({ message: 'Unauthorized! Please provide the required credentials (Token).' })
 	}
 
 	try {
@@ -14,14 +14,14 @@ exports.mustBeLoggedIn = async (req, res, next) => {
 		req.user = decodedPayload
 		next()
 	} catch (error) {
-		return res.status(401).send({ message: 'Invalid token! Access denied.' })
+		return res.status(401).send({ message: 'Unauthorized! Invalid credentials (Token).' })
 	}
 }
 
 // Middleware to check if the user is an admin
 exports.mustBeAnAdmin = (req, res, next) => {
 	if (!req.user.isAdmin) {
-		return res.status(401).send({ message: 'Only admins can view this page.' })
+		return res.status(401).send({ message: 'Unauthorized! Only admins can view this page.' })
 	}
 	next()
 }
@@ -30,7 +30,15 @@ exports.mustBeAnAdmin = (req, res, next) => {
 exports.mustBeOwner = (req, res, next) => {
 	// req.user comes from mustBeLoggedIn
 	if (req.user._id !== req.params.id) {
-		return res.status(403).send({ message: 'Sorry! You are not allowed to perform this operation, you are not the owner.' })
+		return res.status(403).send({ message: 'Forbidden! You are not allowed to perform this operation.' })
+	}
+
+	next()
+}
+
+exports.mustBeOwnerOrAnAdmin = (req, res, next) => {
+	if (!(req.user._id === req.params.id || req.user.isAdmin)) {
+		return res.status(403).send({ message: 'Forbidden! You are not allowed to perform this operation.' })
 	}
 
 	next()

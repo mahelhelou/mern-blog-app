@@ -46,9 +46,19 @@ const userSchema = new mongoose.Schema(
 		}
 	},
 	{
-		timestamps: true
+		timestamps: true,
+		// To allow virtual to work, include these props
+		toJSON: { virtuals: true },
+		toObject: { virtuals: true }
 	}
 )
+
+// Get the posts of the current user
+userSchema.virtual('posts', {
+	ref: 'Post', // Model
+	foreignField: 'author',
+	localField: '_id' // user._id == post.author
+})
 
 // Generate token for logged in users
 userSchema.methods.generateToken = function () {
