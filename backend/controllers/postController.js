@@ -173,7 +173,7 @@ exports.delete = asyncHandler(async (req, res) => {
 
 	await Post.findByIdAndDelete(req.params.id)
 	await cloudinary.removeImage(post.image.publicId)
-	await Comment.deleteMany(postId: post._id)
+	await Comment.deleteMany({ postId: post._id })
 
 	res.status(200).send({ message: 'Post has been deleted successfully.', postId: post._id })
 })

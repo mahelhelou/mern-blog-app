@@ -6,6 +6,8 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 
 const User = require('../models/User')
+const Post = require('../models/Post')
+const Comment = require('../models/Comment')
 const validation = require('../validation')
 const cloudinary = require('../utils/cloudinary')
 
@@ -201,7 +203,7 @@ exports.delete = asyncHandler(async (req, res) => {
 	/**
 	 * 1. Get the user from DB
 	 * 2. Get user's posts from db
-	 * 3. Get public ids from posts
+	 * 3. Get public ids from posts (All images of all posts)
 	 * 4. Delete posts' images from the Cloudinary
 	 * 5. Delete the user's avatar from the Cloudinary
 	 * 6. Delete user's posts and comments
@@ -215,16 +217,29 @@ exports.delete = asyncHandler(async (req, res) => {
 
 	if (!user) return res.status(404).send({ message: '404! User not found.' })
 
-	// TODO (2)
-	// TODO (3)
-	// TODO (4)
+	// 2
+	const posts = await Post.find({ author: user._id })
+
+	// 3
+	/**
+	 * Array of publicIds
+	 * We might found 0 posts for the user, so we put (?)
+	 */
+	const publicIds = posts?.map(post => post.image.publicId)
+
+	// 4, We might find many user's posts without images!
+	if (publicIds.length > 0) {
+		await cloudinary.removeManyImages(publicIds)
+	}
 
 	// 5
 	if (req.user.publicId) {
 		await cloudinary.removeImage(user.avatar.publicId)
 	}
 
-	// TODO (6)
+	// 6
+	await Post.deleteMany({ author: user._id })
+	await Comment.deleteMany({ author: user._id })
 
 	// 7
 	await User.findOneAndDelete(req.params.id)

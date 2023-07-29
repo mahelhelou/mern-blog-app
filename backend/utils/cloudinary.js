@@ -27,3 +27,13 @@ exports.removeImage = async imagePublicId => {
 		throw new Error('Server error! (cloudinary)')
 	}
 }
+
+exports.removeManyImages = async publicIds => {
+	try {
+		const result = await cloudinary.v2.api.delete_resources(publicIds)
+		return result
+	} catch (error) {
+		console.log(error)
+		throw new Error('Server error! (cloudinary)')
+	}
+}

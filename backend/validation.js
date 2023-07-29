@@ -65,3 +65,11 @@ exports.validateUpdateComment = reqInputs => {
 
 	return schema.validate(reqInputs)
 }
+
+exports.validateCreateCategory = reqInputs => {
+	const schema = Joi.object({
+		name: Joi.string().required().trim()
+	})
+
+	return schema.validate(reqInputs)
+}

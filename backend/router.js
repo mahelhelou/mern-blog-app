@@ -4,6 +4,8 @@ const router = express.Router()
 const userController = require('./controllers/userController')
 const postController = require('./controllers/postController')
 const commentController = require('./controllers/commentController')
+const categoryController = require('./controllers/categoryController')
+
 const auth = require('./middleware/auth')
 const dataValidator = require('./middleware/dataValidator')
 const uploader = require('./middleware/uploader')
@@ -37,5 +39,10 @@ router.get('/comments', auth.mustBeLoggedIn, auth.mustBeAnAdmin, commentControll
 
 router.put('/comments/:id', dataValidator.isValidObjectId, auth.mustBeLoggedIn, commentController.update)
 router.delete('/comments/:id', dataValidator.isValidObjectId, auth.mustBeLoggedIn, commentController.delete)
+
+// Category related routes
+router.get('/categories', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.categoriesList)
+router.post('/categories', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.create)
+router.delete('/categories/:id', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.delete)
 
 module.exports = router
