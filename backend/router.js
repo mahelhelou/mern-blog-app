@@ -41,8 +41,8 @@ router.put('/comments/:id', dataValidator.isValidObjectId, auth.mustBeLoggedIn, 
 router.delete('/comments/:id', dataValidator.isValidObjectId, auth.mustBeLoggedIn, commentController.delete)
 
 // Category related routes
-router.get('/categories', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.categoriesList)
 router.post('/categories', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.create)
+router.get('/categories', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.categoriesList)
 router.delete('/categories/:id', auth.mustBeLoggedIn, auth.mustBeAnAdmin, categoryController.delete)
 
 module.exports = router

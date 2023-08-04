@@ -11,6 +11,6 @@ app.use('/api', router)
 
 // Errors handler
 app.use(errorHandler.notFound)
-app.use(errorHandler.error) // Handle errors to routes ~ Return JSON even if there's an error
+app.use(errorHandler.error) // Handle errors of routes ~ Tell server to return JSON even if there's an error
 
 module.exports = app
